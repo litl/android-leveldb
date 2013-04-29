@@ -3,6 +3,18 @@ package com.litl.leveldb;
 import java.io.File;
 
 public class DB extends NativeObject {
+    public static class Snapshot {
+        private int mPtr;
+
+        Snapshot(int ptr) {
+            mPtr = ptr;
+        }
+
+        int getPtr() {
+            return mPtr;
+        }
+    }
+
     private final File mPath;
 
     public DB(File path) {
@@ -36,12 +48,16 @@ public class DB extends NativeObject {
     }
 
     public byte[] get(byte[] key) {
+        return get(null, key);
+    }
+
+    public byte[] get(Snapshot snapshot, byte[] key) {
         assertOpen("Database is closed");
         if (key == null) {
             throw new NullPointerException();
         }
 
-        return nativeGet(mPtr, key);
+        return nativeGet(mPtr, snapshot != null ? snapshot.getPtr() : 0, key);
     }
 
     public void delete(byte[] key) {
@@ -63,8 +79,26 @@ public class DB extends NativeObject {
     }
 
     public Iterator iterator() {
+        return iterator(null);
+    }
+
+    public Iterator iterator(Snapshot snapshot) {
         assertOpen("Database is closed");
-        return new Iterator(nativeIterator(mPtr));
+        return new Iterator(nativeIterator(mPtr, snapshot != null ? snapshot.getPtr() : 0));
+    }
+
+    public Snapshot getSnapshot() {
+        assertOpen("Database is closed");
+        return new Snapshot(nativeGetSnapshot(mPtr));
+    }
+
+    public void releaseSnapshot(Snapshot snapshot) {
+        assertOpen("Database is closed");
+        if (snapshot == null) {
+            throw new NullPointerException();
+        }
+
+        nativeReleaseSnapshot(mPtr, snapshot.getPtr());
     }
 
     public static void destroy(File path) {
@@ -77,7 +111,7 @@ public class DB extends NativeObject {
 
     private static native void nativePut(int dbPtr, byte[] key, byte[] value);
 
-    private static native byte[] nativeGet(int dbPtr, byte[] key);
+    private static native byte[] nativeGet(int dbPtr, int snapshotPtr, byte[] key);
 
     private static native void nativeDelete(int dbPtr, byte[] key);
 
@@ -85,7 +119,11 @@ public class DB extends NativeObject {
 
     private static native void nativeDestroy(String dbpath);
 
-    private static native int nativeIterator(int dbPtr);
+    private static native int nativeIterator(int dbPtr, int snapshotPtr);
+
+    private static native int nativeGetSnapshot(int dbPtr);
+
+    private static native void nativeReleaseSnapshot(int dbPtr, int snapshotPtr);
 
     public static native String stringFromJNI();
 

@@ -87,4 +87,35 @@ public class DBTests extends AndroidTestCase {
             iter.close();
         }
     }
+
+    public void testSnapshots() {
+        mDb.put(bytes("hello"), bytes("one"));
+        mDb.put(bytes("bye"), bytes("one"));
+        mDb.put(bytes("hi"), bytes("one"));
+
+        final DB.Snapshot snapshot = mDb.getSnapshot();
+        final Iterator iter = mDb.iterator(snapshot);
+        try {
+            mDb.put(bytes("hello"), bytes("two"));
+            mDb.delete(bytes("bye"));
+
+            assertTrue(Arrays.equals(mDb.get(snapshot, bytes("hello")), bytes("one")));
+            assertTrue(Arrays.equals(mDb.get(snapshot, bytes("bye")), bytes("one")));
+            assertTrue(Arrays.equals(mDb.get(snapshot, bytes("hi")), bytes("one")));
+
+            int i = 0;
+            for (iter.seekToFirst(); iter.isValid(); iter.next()) {
+                i++;
+                assertTrue(Arrays.equals(iter.getValue(), bytes("one")));
+            }
+            assertEquals(3, i);
+        } finally {
+            iter.close();
+            mDb.releaseSnapshot(snapshot);
+        }
+
+        assertTrue(Arrays.equals(mDb.get(bytes("hello")), bytes("two")));
+        assertTrue(Arrays.equals(mDb.get(bytes("hi")), bytes("one")));
+        assertNull(mDb.get(bytes("bye")));
+    }
 }

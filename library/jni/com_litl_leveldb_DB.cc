@@ -49,15 +49,18 @@ static jbyteArray
 nativeGet(JNIEnv * env,
           jclass clazz,
           jint dbPtr,
+          jint snapshotPtr,
           jbyteArray keyObj)
 {
     leveldb::DB* db = reinterpret_cast<leveldb::DB*>(dbPtr);
+    leveldb::ReadOptions options = leveldb::ReadOptions();
+    options.snapshot = reinterpret_cast<leveldb::Snapshot*>(snapshotPtr);
 
     size_t keyLen = env->GetArrayLength(keyObj);
     jbyte *buffer = env->GetByteArrayElements(keyObj, NULL);
 
     std::string value;
-    leveldb::Status status = db->Get(leveldb::ReadOptions(), leveldb::Slice((const char *)buffer, keyLen), &value);
+    leveldb::Status status = db->Get(options, leveldb::Slice((const char *)buffer, keyLen), &value);
     env->ReleaseByteArrayElements(keyObj, buffer, JNI_ABORT);
 
     if (status.ok()) {
@@ -136,12 +139,37 @@ nativeWrite(JNIEnv *env,
 
 static jint
 nativeIterator(JNIEnv* env,
-               jclass,
-               jint dbPtr)
+               jclass clazz,
+               jint dbPtr,
+               jint snapshotPtr)
 {
     leveldb::DB* db = reinterpret_cast<leveldb::DB*>(dbPtr);
-    leveldb::Iterator *iter = db->NewIterator(leveldb::ReadOptions());
+    leveldb::ReadOptions options = leveldb::ReadOptions();
+    options.snapshot = reinterpret_cast<leveldb::Snapshot*>(snapshotPtr);
+
+    leveldb::Iterator *iter = db->NewIterator(options);
     return reinterpret_cast<jint>(iter);
+}
+
+static jint
+nativeGetSnapshot(JNIEnv *env,
+                  jclass clazz,
+                  jint dbPtr)
+{
+    leveldb::DB* db = reinterpret_cast<leveldb::DB*>(dbPtr);
+    const leveldb::Snapshot* snapshot = db->GetSnapshot();
+    return reinterpret_cast<jint>(snapshot);
+}
+
+static void
+nativeReleaseSnapshot(JNIEnv *env,
+                      jclass clazz,
+                      jint dbPtr,
+                      jint snapshotPtr)
+{
+    leveldb::DB* db = reinterpret_cast<leveldb::DB*>(dbPtr);
+    const leveldb::Snapshot *snapshot = reinterpret_cast<leveldb::Snapshot*>(snapshotPtr);
+    db->ReleaseSnapshot(snapshot);
 }
 
 static void
@@ -162,11 +190,13 @@ static JNINativeMethod sMethods[] =
 {
         { "nativeOpen", "(Ljava/lang/String;)I", (void*) nativeOpen },
         { "nativeClose", "(I)V", (void*) nativeClose },
-        { "nativeGet", "(I[B)[B", (void*) nativeGet },
+        { "nativeGet", "(II[B)[B", (void*) nativeGet },
         { "nativePut", "(I[B[B)V", (void*) nativePut },
         { "nativeDelete", "(I[B)V", (void*) nativeDelete },
         { "nativeWrite", "(II)V", (void*) nativeWrite },
-        { "nativeIterator", "(I)I", (void *) nativeIterator },
+        { "nativeIterator", "(II)I", (void*) nativeIterator },
+        { "nativeGetSnapshot", "(I)I", (void*) nativeGetSnapshot },
+        { "nativeReleaseSnapshot", "(II)V", (void*) nativeReleaseSnapshot },
         { "nativeDestroy", "(Ljava/lang/String;)V", (void*) nativeDestroy }
 };
 
