@@ -1,39 +1,37 @@
 package com.litl.leveldb;
 
-import java.io.Closeable;
-
-public class Iterator implements Closeable {
-    private int mPtr;
-
+public class Iterator extends NativeObject {
     Iterator(int iterPtr) {
-        mPtr = iterPtr;
+        super(iterPtr);
     }
 
     @Override
-    public void close() {
-        if (mPtr != 0) {
-            nativeDestroy(mPtr);
-            mPtr = 0;
-        }
+    public void closeNativeObject(int ptr) {
+        nativeDestroy(ptr);
     }
 
     public void seekToFirst() {
+        assertOpen("Iterator is closed");
         nativeSeekToFirst(mPtr);
     }
 
     public boolean isValid() {
+        assertOpen("Iterator is closed");
         return nativeValid(mPtr);
     }
 
     public void next() {
+        assertOpen("Iterator is closed");
         nativeNext(mPtr);
     }
 
     public byte[] getKey() {
+        assertOpen("Iterator is closed");
         return nativeKey(mPtr);
     }
 
     public byte[] getValue() {
+        assertOpen("Iterator is closed");
         return nativeValue(mPtr);
     }
 

@@ -1,13 +1,13 @@
 package com.litl.leveldb;
 
-import java.io.Closeable;
 import java.io.File;
 
-public class DB implements Closeable {
+public class DB extends NativeObject {
     private final File mPath;
-    private int mPtr;
 
     public DB(File path) {
+        super();
+
         if (path == null) {
             throw new NullPointerException();
         }
@@ -19,17 +19,12 @@ public class DB implements Closeable {
     }
 
     @Override
-    public void close() {
-        if (mPtr != 0) {
-            nativeClose(mPtr);
-            mPtr = 0;
-        }
+    public void closeNativeObject(int ptr) {
+        nativeClose(ptr);
     }
 
     public void put(byte[] key, byte[] value) {
-        if (mPtr == 0) {
-            throw new IllegalStateException("Database is closed");
-        }
+        assertOpen("Database is closed");
         if (key == null) {
             throw new NullPointerException("key");
         }
@@ -41,9 +36,7 @@ public class DB implements Closeable {
     }
 
     public byte[] get(byte[] key) {
-        if (mPtr == 0) {
-            throw new IllegalStateException("Database is closed");
-        }
+        assertOpen("Database is closed");
         if (key == null) {
             throw new NullPointerException();
         }
@@ -52,9 +45,7 @@ public class DB implements Closeable {
     }
 
     public void delete(byte[] key) {
-        if (mPtr == 0) {
-            throw new IllegalStateException("Database is closed");
-        }
+        assertOpen("Database is closed");
         if (key == null) {
             throw new NullPointerException();
         }
@@ -63,9 +54,7 @@ public class DB implements Closeable {
     }
 
     public void write(WriteBatch batch) {
-        if (mPtr == 0) {
-            throw new IllegalStateException("Database is closed");
-        }
+        assertOpen("Database is closed");
         if (batch == null) {
             throw new NullPointerException();
         }
@@ -74,9 +63,7 @@ public class DB implements Closeable {
     }
 
     public Iterator iterator() {
-        if (mPtr == 0) {
-            throw new IllegalStateException("Database is closed");
-        }
+        assertOpen("Database is closed");
         return new Iterator(nativeIterator(mPtr));
     }
 

@@ -1,26 +1,17 @@
 package com.litl.leveldb;
 
-import java.io.Closeable;
-
-public class WriteBatch implements Closeable {
-    private int mPtr;
-
+public class WriteBatch extends NativeObject {
     public WriteBatch() {
-        mPtr = nativeCreate();
+        super(nativeCreate());
     }
 
     @Override
-    public void close() {
-        if (mPtr != 0) {
-            nativeDestroy(mPtr);
-            mPtr = 0;
-        }
+    public void closeNativeObject(int ptr) {
+        nativeDestroy(ptr);
     }
 
     public void delete(byte[] key) {
-        if (mPtr == 0) {
-            throw new IllegalStateException("WriteBatch is closed");
-        }
+        assertOpen("WriteBatch is closed");
         if (key == null) {
             throw new NullPointerException("key");
         }
@@ -29,9 +20,7 @@ public class WriteBatch implements Closeable {
     }
 
     public void put(byte[] key, byte[] value) {
-        if (mPtr == 0) {
-            throw new IllegalStateException("WriteBatch is closed");
-        }
+        assertOpen("WriteBatch is closed");
         if (key == null) {
             throw new NullPointerException("key");
         }
@@ -43,14 +32,8 @@ public class WriteBatch implements Closeable {
     }
 
     public void clear() {
-        if (mPtr == 0) {
-            throw new IllegalStateException("WriteBatch is closed");
-        }
+        assertOpen("WriteBatch is closed");
         nativeClear(mPtr);
-    }
-
-    int getPtr() {
-        return mPtr;
     }
 
     private static native int nativeCreate();
