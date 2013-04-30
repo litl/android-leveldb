@@ -24,6 +24,21 @@ nativeSeekToFirst(JNIEnv* env,
     iter->SeekToFirst();
 }
 
+static void
+nativeSeek(JNIEnv* env,
+           jclass clazz,
+           jint iterPtr,
+           jbyteArray keyObj)
+{
+    leveldb::Iterator* iter = reinterpret_cast<leveldb::Iterator*>(iterPtr);
+
+    size_t keyLen = env->GetArrayLength(keyObj);
+    jbyte *buffer = env->GetByteArrayElements(keyObj, NULL);
+
+    iter->Seek(leveldb::Slice((const char *)buffer, keyLen));
+    env->ReleaseByteArrayElements(keyObj, buffer, JNI_ABORT);
+}
+
 static jboolean
 nativeValid(JNIEnv* env,
             jclass clazz,
@@ -74,6 +89,7 @@ static JNINativeMethod sMethods[] =
 {
         { "nativeDestroy", "(I)V", (void*) nativeDestroy },
         { "nativeSeekToFirst", "(I)V", (void*) nativeSeekToFirst },
+        { "nativeSeek", "(I[B)V", (void*) nativeSeek },
         { "nativeValid", "(I)Z", (void*) nativeValid },
         { "nativeNext", "(I)V", (void*) nativeNext },
         { "nativeKey", "(I)[B", (void*) nativeKey },

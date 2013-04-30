@@ -15,6 +15,14 @@ public class Iterator extends NativeObject {
         nativeSeekToFirst(mPtr);
     }
 
+    public void seek(byte[] target) {
+        assertOpen("Iterator is closed");
+        if (target == null) {
+            throw new IllegalArgumentException();
+        }
+        nativeSeek(mPtr, target);
+    }
+
     public boolean isValid() {
         assertOpen("Iterator is closed");
         return nativeValid(mPtr);
@@ -38,6 +46,8 @@ public class Iterator extends NativeObject {
     private static native void nativeDestroy(int ptr);
 
     private static native void nativeSeekToFirst(int ptr);
+
+    private static native void nativeSeek(int ptr, byte[] key);
 
     private static native boolean nativeValid(int ptr);
 

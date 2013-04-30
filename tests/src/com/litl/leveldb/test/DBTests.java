@@ -118,4 +118,48 @@ public class DBTests extends AndroidTestCase {
         assertTrue(Arrays.equals(mDb.get(bytes("hi")), bytes("one")));
         assertNull(mDb.get(bytes("bye")));
     }
+
+    public void testSeek() {
+        mDb.put(bytes("01"), bytes("foo"));
+        mDb.put(bytes("02"), bytes("foo"));
+        mDb.put(bytes("11"), bytes("foo"));
+        mDb.put(bytes("12"), bytes("foo"));
+        mDb.put(bytes("13"), bytes("foo"));
+        mDb.put(bytes("21"), bytes("foo"));
+
+        Iterator iter = mDb.iterator();
+        try {
+            iter.seek(bytes("1"));
+            assertTrue(iter.isValid());
+            assertTrue(Arrays.equals(bytes("11"), iter.getKey()));
+
+            iter.seek(bytes("2"));
+            assertTrue(iter.isValid());
+            assertTrue(Arrays.equals(bytes("21"), iter.getKey()));
+
+            iter.seek(bytes("3"));
+            assertFalse(iter.isValid());
+        } finally {
+            iter.close();
+        }
+
+        iter = mDb.iterator();
+        try {
+            // Iterate over all values starting with "1"
+            int i = 0;
+            final byte[] searchByte = new byte[] { '1' };
+            for (iter.seek(searchByte); iter.isValid(); iter.next()) {
+                final byte[] key = iter.getKey();
+                if (key[0] != searchByte[0]) {
+                    break;
+                }
+
+                i++;
+            }
+
+            assertEquals(3, i);
+        } finally {
+            iter.close();
+        }
+    }
 }
