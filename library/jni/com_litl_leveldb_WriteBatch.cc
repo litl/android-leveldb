@@ -8,10 +8,30 @@
 
 #include "leveldb/write_batch.h"
 
+static jmethodID gByteBuffer_isDirectMethodID;
+static jmethodID gByteBuffer_positionMethodID;
+static jmethodID gByteBuffer_limitMethodID;
+static jmethodID gByteBuffer_arrayMethodID;
+
 static jint
 nativeCreate(JNIEnv* env,
              jclass clazz)
 {
+    static bool gInited;
+
+    if (!gInited) {
+      jclass byteBuffer_Clazz = env->FindClass("java/nio/ByteBuffer");
+      gByteBuffer_isDirectMethodID = env->GetMethodID(byteBuffer_Clazz,
+                                                      "isDirect", "()Z");
+      gByteBuffer_positionMethodID = env->GetMethodID(byteBuffer_Clazz,
+                                                      "position", "()I");
+      gByteBuffer_limitMethodID = env->GetMethodID(byteBuffer_Clazz,
+                                                   "limit", "()I");
+      gByteBuffer_arrayMethodID = env->GetMethodID(byteBuffer_Clazz,
+                                                   "array", "()[B");
+      gInited = true;
+    }
+
     leveldb::WriteBatch* batch = new leveldb::WriteBatch();
     return reinterpret_cast<jint>(batch);
 }
@@ -30,35 +50,68 @@ static void
 nativeDelete(JNIEnv* env,
              jclass clazz,
              jint ptr,
-             jbyteArray keyObj)
+             jobject buffer)
 {
     leveldb::WriteBatch* batch = reinterpret_cast<leveldb::WriteBatch*>(ptr);
 
-    size_t keyLen = env->GetArrayLength(keyObj);
-    jbyte *buffer = env->GetByteArrayElements(keyObj, NULL);
-    batch->Delete(leveldb::Slice((const char *) buffer, keyLen));
-    env->ReleaseByteArrayElements(keyObj, buffer, JNI_ABORT);
+    jint pos = env->CallIntMethod(buffer, gByteBuffer_positionMethodID);
+    jint limit = env->CallIntMethod(buffer, gByteBuffer_limitMethodID);
+    jboolean isDirect = env->CallBooleanMethod(buffer, gByteBuffer_isDirectMethodID);
+    if (isDirect) {
+        const char *bytes = (const char *) env->GetDirectBufferAddress(buffer);
+        batch->Delete(leveldb::Slice(bytes + pos, limit - pos));
+    } else {
+        jbyteArray array = (jbyteArray) env->CallObjectMethod(buffer, gByteBuffer_arrayMethodID);
+        jbyte *bytes = env->GetByteArrayElements(array, NULL);
+        batch->Delete(leveldb::Slice((const char *) bytes + pos, limit - pos));
+        env->ReleaseByteArrayElements(array, bytes, JNI_ABORT);
+    }
 }
 
 static void
 nativePut(JNIEnv* env,
           jclass clazz,
           jint ptr,
-          jbyteArray keyObj,
-          jbyteArray valObj)
+          jobject keyObj,
+          jobject valObj)
 {
     leveldb::WriteBatch* batch = reinterpret_cast<leveldb::WriteBatch*>(ptr);
 
-    size_t keyLen = env->GetArrayLength(keyObj);
-    jbyte *keyBuf = env->GetByteArrayElements(keyObj, NULL);
+    jint keyPos = env->CallIntMethod(keyObj, gByteBuffer_positionMethodID);
+    jint keyLimit = env->CallIntMethod(keyObj, gByteBuffer_limitMethodID);
+    jboolean keyIsDirect = env->CallBooleanMethod(keyObj, gByteBuffer_isDirectMethodID);
+    jbyteArray keyArray;
+    void* key;
+    if (keyIsDirect) {
+        key = env->GetDirectBufferAddress(keyObj);
+        keyArray = NULL;
+    } else {
+        keyArray = (jbyteArray) env->CallObjectMethod(keyObj, gByteBuffer_arrayMethodID);
+        key = (void*) env->GetByteArrayElements(keyArray, NULL);
+    }
 
-    size_t valLen = env->GetArrayLength(valObj);
-    jbyte *valBuf = env->GetByteArrayElements(valObj, NULL);
+    jint valPos = env->CallIntMethod(valObj, gByteBuffer_positionMethodID);
+    jint valLimit = env->CallIntMethod(valObj, gByteBuffer_limitMethodID);
+    jboolean valIsDirect = env->CallBooleanMethod(valObj, gByteBuffer_isDirectMethodID);
+    jbyteArray valArray;
+    void* val;
+    if (valIsDirect) {
+        val = env->GetDirectBufferAddress(valObj);
+        valArray = NULL;
+    } else {
+        valArray = (jbyteArray) env->CallObjectMethod(valObj, gByteBuffer_arrayMethodID);
+        val = (void*) env->GetByteArrayElements(valArray, NULL);
+    }
 
-    batch->Put(leveldb::Slice((const char *) keyBuf, keyLen), leveldb::Slice((const char *) valBuf, valLen));
+    batch->Put(leveldb::Slice((const char *) key + keyPos, keyLimit - keyPos),
+               leveldb::Slice((const char *) val + valPos, valLimit - valPos));
 
-    env->ReleaseByteArrayElements(keyObj, keyBuf, JNI_ABORT);
-    env->ReleaseByteArrayElements(valObj, valBuf, JNI_ABORT);
+    if (keyArray) {
+        env->ReleaseByteArrayElements(keyArray, (jbyte*) key, JNI_ABORT);
+    }
+    if (valArray) {
+        env->ReleaseByteArrayElements(valArray, (jbyte*) val, JNI_ABORT);
+    }
 }
 
 static void
@@ -74,8 +127,8 @@ static JNINativeMethod sMethods[] =
 {
         { "nativeCreate", "()I", (void*) nativeCreate },
         { "nativeDestroy", "(I)V", (void*) nativeDestroy },
-        { "nativeDelete", "(I[B)V", (void*) nativeDelete },
-        { "nativePut", "(I[B[B)V", (void*) nativePut },
+        { "nativeDelete", "(ILjava/nio/ByteBuffer;)V", (void*) nativeDelete },
+        { "nativePut", "(ILjava/nio/ByteBuffer;Ljava/nio/ByteBuffer;)V", (void*) nativePut },
         { "nativeClear", "(I)V", (void*) nativeClear }
 };
 

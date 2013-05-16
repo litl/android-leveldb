@@ -2,6 +2,7 @@ package com.litl.leveldb.test;
 
 import java.io.File;
 import java.io.UnsupportedEncodingException;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 import android.test.AndroidTestCase;
@@ -59,8 +60,18 @@ public class DBTests extends AndroidTestCase {
 
         final WriteBatch batch = new WriteBatch();
         try {
+            final ByteBuffer key = ByteBuffer.allocate(10);
+            final ByteBuffer val = ByteBuffer.allocate(10);
             for (int i = 0; i < keys.length; i++) {
-                batch.put(bytes(keys[i]), bytes(vals[i]));
+                key.clear();
+                key.put(bytes(keys[i]));
+                key.flip();
+
+                val.clear();
+                val.put(bytes(vals[i]));
+                val.flip();
+
+                batch.put(key, val);
             }
 
             mDb.write(batch);
@@ -160,6 +171,75 @@ public class DBTests extends AndroidTestCase {
             assertEquals(3, i);
         } finally {
             iter.close();
+        }
+    }
+
+    public void testWriteBatch() {
+        final ByteBuffer managedBuf = ByteBuffer.allocate(10);
+        final ByteBuffer directBuf = ByteBuffer.allocateDirect(10);
+
+        final WriteBatch putBatch = new WriteBatch();
+        try {
+            directBuf.clear();
+            directBuf.put(bytes("hello"));
+            directBuf.flip();
+            managedBuf.clear();
+            managedBuf.put(bytes("world"));
+            managedBuf.flip();
+            putBatch.put(directBuf, managedBuf);
+
+            managedBuf.clear();
+            managedBuf.put(bytes("bye"));
+            managedBuf.flip();
+            directBuf.clear();
+            directBuf.put(bytes("moon"));
+            directBuf.flip();
+            putBatch.put(managedBuf, directBuf);
+
+            mDb.write(putBatch);
+        } finally {
+            putBatch.close();
+        }
+
+        final Iterator iter1 = mDb.iterator();
+        try {
+            iter1.seekToFirst();
+            assertTrue(iter1.isValid());
+            assertTrue(Arrays.equals(bytes("bye"), iter1.getKey()));
+            assertTrue(Arrays.equals(bytes("moon"), iter1.getValue()));
+            iter1.next();
+            assertTrue(iter1.isValid());
+            assertTrue(Arrays.equals(bytes("hello"), iter1.getKey()));
+            assertTrue(Arrays.equals(bytes("world"), iter1.getValue()));
+            iter1.next();
+            assertFalse(iter1.isValid());
+        } finally {
+            iter1.close();
+        }
+
+        final WriteBatch deleteBatch = new WriteBatch();
+        try {
+            managedBuf.clear();
+            managedBuf.put(bytes("hello"));
+            managedBuf.flip();
+            deleteBatch.delete(managedBuf);
+
+            directBuf.clear();
+            directBuf.put(bytes("bye"));
+            directBuf.flip();
+            deleteBatch.delete(directBuf);
+
+            mDb.write(deleteBatch);
+        } finally {
+            deleteBatch.close();
+        }
+
+        final Iterator iter2 = mDb.iterator();
+        try {
+            iter2.seekToFirst();
+            assertFalse(iter2.isValid());
+        } finally {
+            iter2.close();
         }
     }
 }

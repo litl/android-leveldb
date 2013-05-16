@@ -1,5 +1,7 @@
 package com.litl.leveldb;
 
+import java.nio.ByteBuffer;
+
 public class WriteBatch extends NativeObject {
     public WriteBatch() {
         super(nativeCreate());
@@ -10,7 +12,7 @@ public class WriteBatch extends NativeObject {
         nativeDestroy(ptr);
     }
 
-    public void delete(byte[] key) {
+    public void delete(ByteBuffer key) {
         assertOpen("WriteBatch is closed");
         if (key == null) {
             throw new NullPointerException("key");
@@ -19,7 +21,7 @@ public class WriteBatch extends NativeObject {
         nativeDelete(mPtr, key);
     }
 
-    public void put(byte[] key, byte[] value) {
+    public void put(ByteBuffer key, ByteBuffer value) {
         assertOpen("WriteBatch is closed");
         if (key == null) {
             throw new NullPointerException("key");
@@ -40,9 +42,9 @@ public class WriteBatch extends NativeObject {
 
     private static native void nativeDestroy(int ptr);
 
-    private static native void nativeDelete(int ptr, byte[] key);
+    private static native void nativeDelete(int ptr, ByteBuffer key);
 
-    private static native void nativePut(int ptr, byte[] key, byte[] val);
+    private static native void nativePut(int ptr, ByteBuffer key, ByteBuffer val);
 
     private static native void nativeClear(int ptr);
 }
