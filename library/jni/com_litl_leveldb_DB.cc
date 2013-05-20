@@ -23,6 +23,8 @@ nativeOpen(JNIEnv* env,
     leveldb::Options options;
     options.create_if_missing = true;
     leveldb::Status status = leveldb::DB::Open(options, path, &db);
+    env->ReleaseStringUTFChars(dbpath, path);
+
     if (!status.ok()) {
         throwException(env, status);
     } else {
