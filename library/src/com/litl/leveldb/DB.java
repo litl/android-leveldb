@@ -128,9 +128,6 @@ public class DB extends NativeObject {
     public static native String stringFromJNI();
 
     {
-        System.loadLibrary("stlport_shared");
-        System.loadLibrary("snappy");
-        System.loadLibrary("leveldb");
         System.loadLibrary("leveldbjni");
     }
 }
