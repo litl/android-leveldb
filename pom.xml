@@ -8,6 +8,7 @@
     <artifactId>leveldbjni-parent</artifactId>
     <name>Android LevelDB JNI (parent)</name>
     <version>0.0.1</version>
+    <url>https://github.com/litl/android-leveldb</url>
 
     <packaging>pom</packaging>
 
@@ -15,6 +16,32 @@
         <module>library</module>
         <module>tests</module>
     </modules>
+
+    <scm>
+        <url>https://github.com/litl/android-leveldb</url>
+        <connection>scm:git:git@github.com:litl/android-leveldb.git</connection>
+        <developerConnection>scm:git:git@github.com:litl/android-leveldb.git</developerConnection>
+    </scm>
+
+    <licenses>
+        <license>
+            <name>BSD 3 Clause License</name>
+            <url>http://opensource.org/licenses/BSD-3-Clause</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <name>Tambet Ingo</name>
+            <email>tingo@litl.com</email>
+            <id>tingo</id>
+            <timezone>+2</timezone>
+            <roles>
+                <role>developer</role>
+            </roles>
+        </developer>
+    </developers>
 
     <properties>
         <android.platform>17</android.platform>
