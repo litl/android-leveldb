@@ -1,31 +1,33 @@
-package com.litl.leveldb.test;
+package com.litl.leveldb;
 
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
-import android.test.AndroidTestCase;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
 
-import com.litl.leveldb.DB;
-import com.litl.leveldb.Iterator;
-import com.litl.leveldb.WriteBatch;
+import android.app.Activity;
 
-public class DBTests extends AndroidTestCase {
+@RunWith(RobolectricTestRunner.class)
+public class DBTest {
     private File mPath;
     private DB mDb;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mPath = new File(getContext().getCacheDir(), "db-tests");
+    @Before
+    public void setUp() throws Exception {
+        mPath = new File((new Activity()).getCacheDir(), "db-tests");
         mDb = new DB(mPath);
         mDb.open();
     }
 
-    @Override
-    protected void tearDown() throws Exception {
-        super.tearDown();
+    @After
+    public void tearDown() throws Exception {
         mDb.close();
         DB.destroy(mPath);
     }
@@ -38,22 +40,24 @@ public class DBTests extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testBasics() {
         mDb.put(bytes("hello"), bytes("world"));
         mDb.put(bytes("bye"), bytes("moon"));
 
         byte[] val = mDb.get(bytes("hello"));
-        assertNotNull(val);
-        assertTrue(Arrays.equals(val, bytes("world")));
+        Assert.assertNotNull(val);
+        Assert.assertTrue(Arrays.equals(val, bytes("world")));
 
         val = mDb.get(bytes("bye"));
-        assertNotNull(val);
-        assertTrue(Arrays.equals(val, bytes("moon")));
+        Assert.assertNotNull(val);
+        Assert.assertTrue(Arrays.equals(val, bytes("moon")));
 
         val = mDb.get(bytes("boo"));
-        assertNull(val);
+        Assert.assertNull(val);
     }
 
+    @Test
     public void testBatchAndIterator() {
         final String[] keys = { "foo1", "foo2", "foo3", "foo4", "foo5" };
         final String[] vals = { "bar1", "bar2", "bar3", "bar4", "bar5" };
@@ -83,22 +87,23 @@ public class DBTests extends AndroidTestCase {
         try {
             int i = 0;
             for (iter.seekToFirst(); iter.isValid(); iter.next()) {
-                assertTrue(i < keys.length);
+                Assert.assertTrue(i < keys.length);
 
                 final byte[] key = iter.getKey();
                 final byte[] val = iter.getValue();
 
-                assertTrue(Arrays.equals(bytes(keys[i]), key));
-                assertTrue(Arrays.equals(bytes(vals[i]), val));
+                Assert.assertTrue(Arrays.equals(bytes(keys[i]), key));
+                Assert.assertTrue(Arrays.equals(bytes(vals[i]), val));
 
                 i++;
             }
-            assertTrue(i == keys.length);
+            Assert.assertTrue(i == keys.length);
         } finally {
             iter.close();
         }
     }
 
+    @Test
     public void testSnapshots() {
         mDb.put(bytes("hello"), bytes("one"));
         mDb.put(bytes("bye"), bytes("one"));
@@ -110,26 +115,27 @@ public class DBTests extends AndroidTestCase {
             mDb.put(bytes("hello"), bytes("two"));
             mDb.delete(bytes("bye"));
 
-            assertTrue(Arrays.equals(mDb.get(snapshot, bytes("hello")), bytes("one")));
-            assertTrue(Arrays.equals(mDb.get(snapshot, bytes("bye")), bytes("one")));
-            assertTrue(Arrays.equals(mDb.get(snapshot, bytes("hi")), bytes("one")));
+            Assert.assertTrue(Arrays.equals(mDb.get(snapshot, bytes("hello")), bytes("one")));
+            Assert.assertTrue(Arrays.equals(mDb.get(snapshot, bytes("bye")), bytes("one")));
+            Assert.assertTrue(Arrays.equals(mDb.get(snapshot, bytes("hi")), bytes("one")));
 
             int i = 0;
             for (iter.seekToFirst(); iter.isValid(); iter.next()) {
                 i++;
-                assertTrue(Arrays.equals(iter.getValue(), bytes("one")));
+                Assert.assertTrue(Arrays.equals(iter.getValue(), bytes("one")));
             }
-            assertEquals(3, i);
+            Assert.assertEquals(3, i);
         } finally {
             iter.close();
             mDb.releaseSnapshot(snapshot);
         }
 
-        assertTrue(Arrays.equals(mDb.get(bytes("hello")), bytes("two")));
-        assertTrue(Arrays.equals(mDb.get(bytes("hi")), bytes("one")));
-        assertNull(mDb.get(bytes("bye")));
+        Assert.assertTrue(Arrays.equals(mDb.get(bytes("hello")), bytes("two")));
+        Assert.assertTrue(Arrays.equals(mDb.get(bytes("hi")), bytes("one")));
+        Assert.assertNull(mDb.get(bytes("bye")));
     }
 
+    @Test
     public void testSeek() {
         mDb.put(bytes("01"), bytes("foo"));
         mDb.put(bytes("02"), bytes("foo"));
@@ -141,15 +147,15 @@ public class DBTests extends AndroidTestCase {
         Iterator iter = mDb.iterator();
         try {
             iter.seek(bytes("1"));
-            assertTrue(iter.isValid());
-            assertTrue(Arrays.equals(bytes("11"), iter.getKey()));
+            Assert.assertTrue(iter.isValid());
+            Assert.assertTrue(Arrays.equals(bytes("11"), iter.getKey()));
 
             iter.seek(bytes("2"));
-            assertTrue(iter.isValid());
-            assertTrue(Arrays.equals(bytes("21"), iter.getKey()));
+            Assert.assertTrue(iter.isValid());
+            Assert.assertTrue(Arrays.equals(bytes("21"), iter.getKey()));
 
             iter.seek(bytes("3"));
-            assertFalse(iter.isValid());
+            Assert.assertFalse(iter.isValid());
         } finally {
             iter.close();
         }
@@ -168,12 +174,13 @@ public class DBTests extends AndroidTestCase {
                 i++;
             }
 
-            assertEquals(3, i);
+            Assert.assertEquals(3, i);
         } finally {
             iter.close();
         }
     }
 
+    @Test
     public void testWriteBatch() {
         final ByteBuffer managedBuf = ByteBuffer.allocate(10);
         final ByteBuffer directBuf = ByteBuffer.allocateDirect(10);
@@ -204,15 +211,15 @@ public class DBTests extends AndroidTestCase {
         final Iterator iter1 = mDb.iterator();
         try {
             iter1.seekToFirst();
-            assertTrue(iter1.isValid());
-            assertTrue(Arrays.equals(bytes("bye"), iter1.getKey()));
-            assertTrue(Arrays.equals(bytes("moon"), iter1.getValue()));
+            Assert.assertTrue(iter1.isValid());
+            Assert.assertTrue(Arrays.equals(bytes("bye"), iter1.getKey()));
+            Assert.assertTrue(Arrays.equals(bytes("moon"), iter1.getValue()));
             iter1.next();
-            assertTrue(iter1.isValid());
-            assertTrue(Arrays.equals(bytes("hello"), iter1.getKey()));
-            assertTrue(Arrays.equals(bytes("world"), iter1.getValue()));
+            Assert.assertTrue(iter1.isValid());
+            Assert.assertTrue(Arrays.equals(bytes("hello"), iter1.getKey()));
+            Assert.assertTrue(Arrays.equals(bytes("world"), iter1.getValue()));
             iter1.next();
-            assertFalse(iter1.isValid());
+            Assert.assertFalse(iter1.isValid());
         } finally {
             iter1.close();
         }
@@ -237,7 +244,7 @@ public class DBTests extends AndroidTestCase {
         final Iterator iter2 = mDb.iterator();
         try {
             iter2.seekToFirst();
-            assertFalse(iter2.isValid());
+            Assert.assertFalse(iter2.isValid());
         } finally {
             iter2.close();
         }
