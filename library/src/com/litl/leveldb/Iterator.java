@@ -58,6 +58,8 @@ public class Iterator extends NativeObject {
 
     private static native void nativeNext(int ptr);
 
+    private static native void nativePrev(int ptr);
+
     private static native byte[] nativeKey(int dbPtr);
 
     private static native byte[] nativeValue(int dbPtr);
