@@ -57,6 +57,15 @@ nativeNext(JNIEnv* env,
     iter->Next();
 }
 
+static void
+nativePrev(JNIEnv* env,
+           jclass clazz,
+           jint iterPtr)
+{
+    leveldb::Iterator* iter = reinterpret_cast<leveldb::Iterator*>(iterPtr);
+    iter->Prev();
+}
+
 static jbyteArray
 nativeKey(JNIEnv* env,
           jclass clazz,
@@ -92,6 +101,7 @@ static JNINativeMethod sMethods[] =
         { "nativeSeek", "(I[B)V", (void*) nativeSeek },
         { "nativeValid", "(I)Z", (void*) nativeValid },
         { "nativeNext", "(I)V", (void*) nativeNext },
+        { "nativePrev", "(I)V", (void*) nativePrev },
         { "nativeKey", "(I)[B", (void*) nativeKey },
         { "nativeValue", "(I)[B", (void*) nativeValue }
 };

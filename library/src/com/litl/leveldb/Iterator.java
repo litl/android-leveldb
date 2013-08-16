@@ -33,6 +33,11 @@ public class Iterator extends NativeObject {
         nativeNext(mPtr);
     }
 
+    public void prev() {
+        assertOpen("Iterator is closed");
+        nativePrev(mPtr);
+    }
+
     public byte[] getKey() {
         assertOpen("Iterator is closed");
         return nativeKey(mPtr);
