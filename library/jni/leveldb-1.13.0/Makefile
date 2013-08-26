@@ -44,6 +44,7 @@ TESTS = \
 	filename_test \
 	filter_block_test \
 	issue178_test \
+	issue200_test \
 	log_test \
 	memenv_test \
 	skiplist_test \
@@ -153,6 +154,9 @@ filter_block_test: table/filter_block_test.o $(LIBOBJECTS) $(TESTHARNESS)
 
 issue178_test: issues/issue178_test.o $(LIBOBJECTS) $(TESTHARNESS)
 	$(CXX) $(LDFLAGS) issues/issue178_test.o $(LIBOBJECTS) $(TESTHARNESS) -o $@ $(LIBS)
+
+issue200_test: issues/issue200_test.o $(LIBOBJECTS) $(TESTHARNESS)
+	$(CXX) $(LDFLAGS) issues/issue200_test.o $(LIBOBJECTS) $(TESTHARNESS) -o $@ $(LIBS)
 
 log_test: db/log_test.o $(LIBOBJECTS) $(TESTHARNESS)
 	$(CXX) $(LDFLAGS) db/log_test.o $(LIBOBJECTS) $(TESTHARNESS) -o $@ $(LIBS)
