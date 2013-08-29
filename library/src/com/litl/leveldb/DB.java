@@ -4,13 +4,13 @@ import java.io.File;
 
 public class DB extends NativeObject {
     public static class Snapshot {
-        private int mPtr;
+        private long mPtr;
 
-        Snapshot(int ptr) {
+        Snapshot(long ptr) {
             mPtr = ptr;
         }
 
-        int getPtr() {
+        long getPtr() {
             return mPtr;
         }
     }
@@ -31,7 +31,7 @@ public class DB extends NativeObject {
     }
 
     @Override
-    public void closeNativeObject(int ptr) {
+    public void closeNativeObject(long ptr) {
         nativeClose(ptr);
     }
 
@@ -105,25 +105,25 @@ public class DB extends NativeObject {
         nativeDestroy(path.getAbsolutePath());
     }
 
-    private static native int nativeOpen(String dbpath);
+    private static native long nativeOpen(String dbpath);
 
-    private static native void nativeClose(int dbPtr);
+    private static native void nativeClose(long dbPtr);
 
-    private static native void nativePut(int dbPtr, byte[] key, byte[] value);
+    private static native void nativePut(long dbPtr, byte[] key, byte[] value);
 
-    private static native byte[] nativeGet(int dbPtr, int snapshotPtr, byte[] key);
+    private static native byte[] nativeGet(long dbPtr, long snapshotPtr, byte[] key);
 
-    private static native void nativeDelete(int dbPtr, byte[] key);
+    private static native void nativeDelete(long dbPtr, byte[] key);
 
-    private static native void nativeWrite(int dbPtr, int batchPtr);
+    private static native void nativeWrite(long dbPtr, long batchPtr);
 
     private static native void nativeDestroy(String dbpath);
 
-    private static native int nativeIterator(int dbPtr, int snapshotPtr);
+    private static native long nativeIterator(long dbPtr, long snapshotPtr);
 
-    private static native int nativeGetSnapshot(int dbPtr);
+    private static native long nativeGetSnapshot(long dbPtr);
 
-    private static native void nativeReleaseSnapshot(int dbPtr, int snapshotPtr);
+    private static native void nativeReleaseSnapshot(long dbPtr, long snapshotPtr);
 
     public static native String stringFromJNI();
 
