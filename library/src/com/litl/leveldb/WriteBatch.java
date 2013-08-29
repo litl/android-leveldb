@@ -8,7 +8,7 @@ public class WriteBatch extends NativeObject {
     }
 
     @Override
-    public void closeNativeObject(long ptr) {
+    protected void closeNativeObject(long ptr) {
         nativeDestroy(ptr);
     }
 
@@ -38,7 +38,7 @@ public class WriteBatch extends NativeObject {
         nativeClear(mPtr);
     }
 
-    private static native int nativeCreate();
+    private static native long nativeCreate();
 
     private static native void nativeDestroy(long ptr);
 

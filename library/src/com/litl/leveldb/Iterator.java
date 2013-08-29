@@ -6,7 +6,7 @@ public class Iterator extends NativeObject {
     }
 
     @Override
-    public void closeNativeObject(long ptr) {
+    protected void closeNativeObject(long ptr) {
         nativeDestroy(ptr);
     }
 

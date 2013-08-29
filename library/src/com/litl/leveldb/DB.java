@@ -3,15 +3,9 @@ package com.litl.leveldb;
 import java.io.File;
 
 public class DB extends NativeObject {
-    public static class Snapshot {
-        private long mPtr;
-
+    public abstract class Snapshot extends NativeObject {
         Snapshot(long ptr) {
-            mPtr = ptr;
-        }
-
-        long getPtr() {
-            return mPtr;
+            super(ptr);
         }
     }
 
@@ -31,7 +25,7 @@ public class DB extends NativeObject {
     }
 
     @Override
-    public void closeNativeObject(long ptr) {
+    protected void closeNativeObject(long ptr) {
         nativeClose(ptr);
     }
 
@@ -82,23 +76,37 @@ public class DB extends NativeObject {
         return iterator(null);
     }
 
-    public Iterator iterator(Snapshot snapshot) {
+    public Iterator iterator(final Snapshot snapshot) {
         assertOpen("Database is closed");
-        return new Iterator(nativeIterator(mPtr, snapshot != null ? snapshot.getPtr() : 0));
+
+        ref();
+
+        if (snapshot != null) {
+            snapshot.ref();
+        }
+
+        return new Iterator(nativeIterator(mPtr, snapshot != null ? snapshot.getPtr() : 0)) {
+            @Override
+            protected void closeNativeObject(long ptr) {
+                super.closeNativeObject(ptr);
+                if (snapshot != null) {
+                    snapshot.unref();
+                }
+
+                DB.this.unref();
+            }
+        };
     }
 
     public Snapshot getSnapshot() {
         assertOpen("Database is closed");
-        return new Snapshot(nativeGetSnapshot(mPtr));
-    }
-
-    public void releaseSnapshot(Snapshot snapshot) {
-        assertOpen("Database is closed");
-        if (snapshot == null) {
-            throw new NullPointerException();
-        }
-
-        nativeReleaseSnapshot(mPtr, snapshot.getPtr());
+        ref();
+        return new Snapshot(nativeGetSnapshot(mPtr)) {
+            protected void closeNativeObject(long ptr) {
+                nativeReleaseSnapshot(DB.this.getPtr(), getPtr());
+                DB.this.unref();
+            }
+        };
     }
 
     public static void destroy(File path) {
