@@ -8,7 +8,7 @@
 static void
 nativeDestroy(JNIEnv* env,
               jclass clazz,
-              jint ptr)
+              jlong ptr)
 {
     leveldb::Iterator* iter = reinterpret_cast<leveldb::Iterator*>(ptr);
 
@@ -18,7 +18,7 @@ nativeDestroy(JNIEnv* env,
 static void
 nativeSeekToFirst(JNIEnv* env,
                   jclass clazz,
-                  jint iterPtr)
+                  jlong iterPtr)
 {
     leveldb::Iterator* iter = reinterpret_cast<leveldb::Iterator*>(iterPtr);
     iter->SeekToFirst();
@@ -27,7 +27,7 @@ nativeSeekToFirst(JNIEnv* env,
 static void
 nativeSeek(JNIEnv* env,
            jclass clazz,
-           jint iterPtr,
+           jlong iterPtr,
            jbyteArray keyObj)
 {
     leveldb::Iterator* iter = reinterpret_cast<leveldb::Iterator*>(iterPtr);
@@ -42,7 +42,7 @@ nativeSeek(JNIEnv* env,
 static jboolean
 nativeValid(JNIEnv* env,
             jclass clazz,
-            jint iterPtr)
+            jlong iterPtr)
 {
     leveldb::Iterator* iter = reinterpret_cast<leveldb::Iterator*>(iterPtr);
     return iter->Valid();
@@ -51,7 +51,7 @@ nativeValid(JNIEnv* env,
 static void
 nativeNext(JNIEnv* env,
            jclass clazz,
-           jint iterPtr)
+           jlong iterPtr)
 {
     leveldb::Iterator* iter = reinterpret_cast<leveldb::Iterator*>(iterPtr);
     iter->Next();
@@ -60,7 +60,7 @@ nativeNext(JNIEnv* env,
 static void
 nativePrev(JNIEnv* env,
            jclass clazz,
-           jint iterPtr)
+           jlong iterPtr)
 {
     leveldb::Iterator* iter = reinterpret_cast<leveldb::Iterator*>(iterPtr);
     iter->Prev();
@@ -69,7 +69,7 @@ nativePrev(JNIEnv* env,
 static jbyteArray
 nativeKey(JNIEnv* env,
           jclass clazz,
-          jint iterPtr)
+          jlong iterPtr)
 {
     leveldb::Iterator* iter = reinterpret_cast<leveldb::Iterator*>(iterPtr);
     leveldb::Slice key = iter->key();
@@ -83,7 +83,7 @@ nativeKey(JNIEnv* env,
 static jbyteArray
 nativeValue(JNIEnv* env,
             jclass clazz,
-            jint iterPtr)
+            jlong iterPtr)
 {
     leveldb::Iterator* iter = reinterpret_cast<leveldb::Iterator*>(iterPtr);
     leveldb::Slice value = iter->value();
@@ -96,14 +96,14 @@ nativeValue(JNIEnv* env,
 
 static JNINativeMethod sMethods[] =
 {
-        { "nativeDestroy", "(I)V", (void*) nativeDestroy },
-        { "nativeSeekToFirst", "(I)V", (void*) nativeSeekToFirst },
-        { "nativeSeek", "(I[B)V", (void*) nativeSeek },
-        { "nativeValid", "(I)Z", (void*) nativeValid },
-        { "nativeNext", "(I)V", (void*) nativeNext },
-        { "nativePrev", "(I)V", (void*) nativePrev },
-        { "nativeKey", "(I)[B", (void*) nativeKey },
-        { "nativeValue", "(I)[B", (void*) nativeValue }
+        { "nativeDestroy", "(J)V", (void*) nativeDestroy },
+        { "nativeSeekToFirst", "(J)V", (void*) nativeSeekToFirst },
+        { "nativeSeek", "(J[B)V", (void*) nativeSeek },
+        { "nativeValid", "(J)Z", (void*) nativeValid },
+        { "nativeNext", "(J)V", (void*) nativeNext },
+        { "nativePrev", "(J)V", (void*) nativePrev },
+        { "nativeKey", "(J)[B", (void*) nativeKey },
+        { "nativeValue", "(J)[B", (void*) nativeValue }
 };
 
 int

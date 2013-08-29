@@ -13,7 +13,7 @@ static jmethodID gByteBuffer_positionMethodID;
 static jmethodID gByteBuffer_limitMethodID;
 static jmethodID gByteBuffer_arrayMethodID;
 
-static jint
+static jlong
 nativeCreate(JNIEnv* env,
              jclass clazz)
 {
@@ -33,13 +33,13 @@ nativeCreate(JNIEnv* env,
     }
 
     leveldb::WriteBatch* batch = new leveldb::WriteBatch();
-    return reinterpret_cast<jint>(batch);
+    return reinterpret_cast<jlong>(batch);
 }
 
 static void
 nativeDestroy(JNIEnv* env,
               jclass clazz,
-              jint ptr)
+              jlong ptr)
 {
     leveldb::WriteBatch* batch = reinterpret_cast<leveldb::WriteBatch*>(ptr);
 
@@ -49,7 +49,7 @@ nativeDestroy(JNIEnv* env,
 static void
 nativeDelete(JNIEnv* env,
              jclass clazz,
-             jint ptr,
+             jlong ptr,
              jobject buffer)
 {
     leveldb::WriteBatch* batch = reinterpret_cast<leveldb::WriteBatch*>(ptr);
@@ -71,7 +71,7 @@ nativeDelete(JNIEnv* env,
 static void
 nativePut(JNIEnv* env,
           jclass clazz,
-          jint ptr,
+          jlong ptr,
           jobject keyObj,
           jobject valObj)
 {
@@ -117,7 +117,7 @@ nativePut(JNIEnv* env,
 static void
 nativeClear(JNIEnv* env,
             jclass clazz,
-            jint ptr)
+            jlong ptr)
 {
     leveldb::WriteBatch* batch = reinterpret_cast<leveldb::WriteBatch*>(ptr);
     batch->Clear();
@@ -125,11 +125,11 @@ nativeClear(JNIEnv* env,
 
 static JNINativeMethod sMethods[] =
 {
-        { "nativeCreate", "()I", (void*) nativeCreate },
-        { "nativeDestroy", "(I)V", (void*) nativeDestroy },
-        { "nativeDelete", "(ILjava/nio/ByteBuffer;)V", (void*) nativeDelete },
-        { "nativePut", "(ILjava/nio/ByteBuffer;Ljava/nio/ByteBuffer;)V", (void*) nativePut },
-        { "nativeClear", "(I)V", (void*) nativeClear }
+        { "nativeCreate", "()J", (void*) nativeCreate },
+        { "nativeDestroy", "(J)V", (void*) nativeDestroy },
+        { "nativeDelete", "(JLjava/nio/ByteBuffer;)V", (void*) nativeDelete },
+        { "nativePut", "(JLjava/nio/ByteBuffer;Ljava/nio/ByteBuffer;)V", (void*) nativePut },
+        { "nativeClear", "(J)V", (void*) nativeClear }
 };
 
 int

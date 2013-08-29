@@ -3,12 +3,12 @@ package com.litl.leveldb;
 import java.io.Closeable;
 
 abstract class NativeObject implements Closeable {
-    protected int mPtr;
+    protected long mPtr;
 
     protected NativeObject() {
     }
 
-    protected NativeObject(int ptr) {
+    protected NativeObject(long ptr) {
         if (ptr == 0) {
             throw new OutOfMemoryError("Failed to allocate native object");
         }
@@ -16,7 +16,7 @@ abstract class NativeObject implements Closeable {
         mPtr = ptr;
     }
 
-    protected int getPtr() {
+    protected long getPtr() {
         return mPtr;
     }
 
@@ -34,5 +34,5 @@ abstract class NativeObject implements Closeable {
         }
     }
 
-    protected abstract void closeNativeObject(int ptr);
+    protected abstract void closeNativeObject(long ptr);
 }
