@@ -10,6 +10,7 @@ public class DB extends NativeObject {
     }
 
     private final File mPath;
+    private boolean mDestroyOnClose = false;
 
     public DB(File path) {
         super();
@@ -27,6 +28,10 @@ public class DB extends NativeObject {
     @Override
     protected void closeNativeObject(long ptr) {
         nativeClose(ptr);
+
+        if (mDestroyOnClose) {
+            destroy(mPath);
+        }
     }
 
     public void put(byte[] key, byte[] value) {
@@ -107,6 +112,13 @@ public class DB extends NativeObject {
                 DB.this.unref();
             }
         };
+    }
+
+    public void destroy() {
+        mDestroyOnClose = true;
+        if (getPtr() == 0) {
+            destroy(mPath);
+        }
     }
 
     public static void destroy(File path) {
