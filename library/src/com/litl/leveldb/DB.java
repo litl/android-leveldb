@@ -3,7 +3,7 @@ package com.litl.leveldb;
 import java.io.File;
 
 public class DB extends NativeObject {
-    public abstract class Snapshot extends NativeObject {
+    public abstract static class Snapshot extends NativeObject {
         Snapshot(long ptr) {
             super(ptr);
         }
