@@ -1,14 +1,13 @@
 package com.litl.leveldb;
 
 import java.io.Closeable;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import android.util.Log;
 
 abstract class NativeObject implements Closeable {
     private static final String TAG = NativeObject.class.getSimpleName();
     protected long mPtr;
-    private AtomicInteger mRefCount = new AtomicInteger();
+    private int mRefCount = 0;
 
     protected NativeObject() {
         // The Java wrapper counts as one reference, will
@@ -26,22 +25,28 @@ abstract class NativeObject implements Closeable {
         mPtr = ptr;
     }
 
-    protected long getPtr() {
+    synchronized protected long getPtr() {
         return mPtr;
     }
 
     protected void assertOpen(String message) {
-        if (mPtr == 0) {
+        if (getPtr() == 0) {
             throw new IllegalStateException(message);
         }
     }
 
-    void ref() {
-        mRefCount.incrementAndGet();
+    synchronized void ref() {
+        mRefCount++;
     }
 
-    void unref() {
-        if (mRefCount.decrementAndGet() == 0) {
+    synchronized void unref() {
+        if (mRefCount <= 0) {
+            throw new IllegalStateException("Reference count is already 0");
+        }
+
+        mRefCount--;
+
+        if (mRefCount == 0) {
             closeNativeObject(mPtr);
             mPtr = 0;
         }
