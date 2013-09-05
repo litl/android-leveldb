@@ -3,19 +3,14 @@ package com.litl.leveldb;
 import java.io.File;
 
 public class DB extends NativeObject {
-    public static class Snapshot {
-        private int mPtr;
-
-        Snapshot(int ptr) {
-            mPtr = ptr;
-        }
-
-        int getPtr() {
-            return mPtr;
+    public abstract static class Snapshot extends NativeObject {
+        Snapshot(long ptr) {
+            super(ptr);
         }
     }
 
     private final File mPath;
+    private boolean mDestroyOnClose = false;
 
     public DB(File path) {
         super();
@@ -31,8 +26,12 @@ public class DB extends NativeObject {
     }
 
     @Override
-    public void closeNativeObject(int ptr) {
+    protected void closeNativeObject(long ptr) {
         nativeClose(ptr);
+
+        if (mDestroyOnClose) {
+            destroy(mPath);
+        }
     }
 
     public void put(byte[] key, byte[] value) {
@@ -82,48 +81,69 @@ public class DB extends NativeObject {
         return iterator(null);
     }
 
-    public Iterator iterator(Snapshot snapshot) {
+    public Iterator iterator(final Snapshot snapshot) {
         assertOpen("Database is closed");
-        return new Iterator(nativeIterator(mPtr, snapshot != null ? snapshot.getPtr() : 0));
+
+        ref();
+
+        if (snapshot != null) {
+            snapshot.ref();
+        }
+
+        return new Iterator(nativeIterator(mPtr, snapshot != null ? snapshot.getPtr() : 0)) {
+            @Override
+            protected void closeNativeObject(long ptr) {
+                super.closeNativeObject(ptr);
+                if (snapshot != null) {
+                    snapshot.unref();
+                }
+
+                DB.this.unref();
+            }
+        };
     }
 
     public Snapshot getSnapshot() {
         assertOpen("Database is closed");
-        return new Snapshot(nativeGetSnapshot(mPtr));
+        ref();
+        return new Snapshot(nativeGetSnapshot(mPtr)) {
+            protected void closeNativeObject(long ptr) {
+                nativeReleaseSnapshot(DB.this.getPtr(), getPtr());
+                DB.this.unref();
+            }
+        };
     }
 
-    public void releaseSnapshot(Snapshot snapshot) {
-        assertOpen("Database is closed");
-        if (snapshot == null) {
-            throw new NullPointerException();
+    public void destroy() {
+        mDestroyOnClose = true;
+        if (getPtr() == 0) {
+            destroy(mPath);
         }
-
-        nativeReleaseSnapshot(mPtr, snapshot.getPtr());
     }
 
     public static void destroy(File path) {
         nativeDestroy(path.getAbsolutePath());
     }
 
-    private static native int nativeOpen(String dbpath);
+    private static native long nativeOpen(String dbpath);
 
-    private static native void nativeClose(int dbPtr);
+    private static native void nativeClose(long dbPtr);
 
-    private static native void nativePut(int dbPtr, byte[] key, byte[] value);
+    private static native void nativePut(long dbPtr, byte[] key, byte[] value);
 
-    private static native byte[] nativeGet(int dbPtr, int snapshotPtr, byte[] key);
+    private static native byte[] nativeGet(long dbPtr, long snapshotPtr, byte[] key);
 
-    private static native void nativeDelete(int dbPtr, byte[] key);
+    private static native void nativeDelete(long dbPtr, byte[] key);
 
-    private static native void nativeWrite(int dbPtr, int batchPtr);
+    private static native void nativeWrite(long dbPtr, long batchPtr);
 
     private static native void nativeDestroy(String dbpath);
 
-    private static native int nativeIterator(int dbPtr, int snapshotPtr);
+    private static native long nativeIterator(long dbPtr, long snapshotPtr);
 
-    private static native int nativeGetSnapshot(int dbPtr);
+    private static native long nativeGetSnapshot(long dbPtr);
 
-    private static native void nativeReleaseSnapshot(int dbPtr, int snapshotPtr);
+    private static native void nativeReleaseSnapshot(long dbPtr, long snapshotPtr);
 
     public static native String stringFromJNI();
 

@@ -122,7 +122,7 @@ public class DBTests extends AndroidTestCase {
             assertEquals(3, i);
         } finally {
             iter.close();
-            mDb.releaseSnapshot(snapshot);
+            snapshot.close();
         }
 
         assertTrue(Arrays.equals(mDb.get(bytes("hello")), bytes("two")));

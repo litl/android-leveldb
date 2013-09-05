@@ -10,7 +10,7 @@
 #include "leveldb/db.h"
 #include "leveldb/write_batch.h"
 
-static jint
+static jlong
 nativeOpen(JNIEnv* env,
            jclass clazz,
            jstring dbpath)
@@ -31,13 +31,13 @@ nativeOpen(JNIEnv* env,
         LOGI("Opened database");
     }
 
-    return reinterpret_cast<jint>(db);
+    return reinterpret_cast<jlong>(db);
 }
 
 static void
 nativeClose(JNIEnv* env,
             jclass clazz,
-            jint dbPtr)
+            jlong dbPtr)
 {
     leveldb::DB* db = reinterpret_cast<leveldb::DB*>(dbPtr);
     if (db) {
@@ -50,8 +50,8 @@ nativeClose(JNIEnv* env,
 static jbyteArray
 nativeGet(JNIEnv * env,
           jclass clazz,
-          jint dbPtr,
-          jint snapshotPtr,
+          jlong dbPtr,
+          jlong snapshotPtr,
           jbyteArray keyObj)
 {
     leveldb::DB* db = reinterpret_cast<leveldb::DB*>(dbPtr);
@@ -83,7 +83,7 @@ nativeGet(JNIEnv * env,
 static void
 nativePut(JNIEnv *env,
           jclass clazz,
-          jint dbPtr,
+          jlong dbPtr,
           jbyteArray keyObj,
           jbyteArray valObj)
 {
@@ -110,7 +110,7 @@ nativePut(JNIEnv *env,
 static void
 nativeDelete(JNIEnv *env,
              jclass clazz,
-             jint dbPtr,
+             jlong dbPtr,
              jbyteArray keyObj)
 {
     leveldb::DB* db = reinterpret_cast<leveldb::DB*>(dbPtr);
@@ -129,8 +129,8 @@ nativeDelete(JNIEnv *env,
 static void
 nativeWrite(JNIEnv *env,
             jclass clazz,
-            jint dbPtr,
-            jint batchPtr)
+            jlong dbPtr,
+            jlong batchPtr)
 {
     leveldb::DB* db = reinterpret_cast<leveldb::DB*>(dbPtr);
 
@@ -141,35 +141,35 @@ nativeWrite(JNIEnv *env,
     }
 }
 
-static jint
+static jlong
 nativeIterator(JNIEnv* env,
                jclass clazz,
-               jint dbPtr,
-               jint snapshotPtr)
+               jlong dbPtr,
+               jlong snapshotPtr)
 {
     leveldb::DB* db = reinterpret_cast<leveldb::DB*>(dbPtr);
     leveldb::ReadOptions options = leveldb::ReadOptions();
     options.snapshot = reinterpret_cast<leveldb::Snapshot*>(snapshotPtr);
 
     leveldb::Iterator *iter = db->NewIterator(options);
-    return reinterpret_cast<jint>(iter);
+    return reinterpret_cast<jlong>(iter);
 }
 
-static jint
+static jlong
 nativeGetSnapshot(JNIEnv *env,
                   jclass clazz,
-                  jint dbPtr)
+                  jlong dbPtr)
 {
     leveldb::DB* db = reinterpret_cast<leveldb::DB*>(dbPtr);
     const leveldb::Snapshot* snapshot = db->GetSnapshot();
-    return reinterpret_cast<jint>(snapshot);
+    return reinterpret_cast<jlong>(snapshot);
 }
 
 static void
 nativeReleaseSnapshot(JNIEnv *env,
                       jclass clazz,
-                      jint dbPtr,
-                      jint snapshotPtr)
+                      jlong dbPtr,
+                      jlong snapshotPtr)
 {
     leveldb::DB* db = reinterpret_cast<leveldb::DB*>(dbPtr);
     const leveldb::Snapshot *snapshot = reinterpret_cast<leveldb::Snapshot*>(snapshotPtr);
@@ -192,15 +192,15 @@ nativeDestroy(JNIEnv *env,
 
 static JNINativeMethod sMethods[] =
 {
-        { "nativeOpen", "(Ljava/lang/String;)I", (void*) nativeOpen },
-        { "nativeClose", "(I)V", (void*) nativeClose },
-        { "nativeGet", "(II[B)[B", (void*) nativeGet },
-        { "nativePut", "(I[B[B)V", (void*) nativePut },
-        { "nativeDelete", "(I[B)V", (void*) nativeDelete },
-        { "nativeWrite", "(II)V", (void*) nativeWrite },
-        { "nativeIterator", "(II)I", (void*) nativeIterator },
-        { "nativeGetSnapshot", "(I)I", (void*) nativeGetSnapshot },
-        { "nativeReleaseSnapshot", "(II)V", (void*) nativeReleaseSnapshot },
+        { "nativeOpen", "(Ljava/lang/String;)J", (void*) nativeOpen },
+        { "nativeClose", "(J)V", (void*) nativeClose },
+        { "nativeGet", "(JJ[B)[B", (void*) nativeGet },
+        { "nativePut", "(J[B[B)V", (void*) nativePut },
+        { "nativeDelete", "(J[B)V", (void*) nativeDelete },
+        { "nativeWrite", "(JJ)V", (void*) nativeWrite },
+        { "nativeIterator", "(JJ)J", (void*) nativeIterator },
+        { "nativeGetSnapshot", "(J)J", (void*) nativeGetSnapshot },
+        { "nativeReleaseSnapshot", "(JJ)V", (void*) nativeReleaseSnapshot },
         { "nativeDestroy", "(Ljava/lang/String;)V", (void*) nativeDestroy }
 };
 
