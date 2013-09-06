@@ -2,13 +2,22 @@ package com.litl.leveldb;
 
 import java.io.Closeable;
 
+import android.util.Log;
+
 abstract class NativeObject implements Closeable {
-    protected int mPtr;
+    private static final String TAG = NativeObject.class.getSimpleName();
+    protected long mPtr;
+    private int mRefCount = 0;
 
     protected NativeObject() {
+        // The Java wrapper counts as one reference, will
+        // be released when closed
+        ref();
     }
 
-    protected NativeObject(int ptr) {
+    protected NativeObject(long ptr) {
+        this();
+
         if (ptr == 0) {
             throw new OutOfMemoryError("Failed to allocate native object");
         }
@@ -16,23 +25,49 @@ abstract class NativeObject implements Closeable {
         mPtr = ptr;
     }
 
-    protected int getPtr() {
+    synchronized protected long getPtr() {
         return mPtr;
     }
 
     protected void assertOpen(String message) {
-        if (mPtr == 0) {
+        if (getPtr() == 0) {
             throw new IllegalStateException(message);
         }
     }
 
-    @Override
-    public void close() {
-        if (mPtr != 0) {
+    synchronized void ref() {
+        mRefCount++;
+    }
+
+    synchronized void unref() {
+        if (mRefCount <= 0) {
+            throw new IllegalStateException("Reference count is already 0");
+        }
+
+        mRefCount--;
+
+        if (mRefCount == 0) {
             closeNativeObject(mPtr);
             mPtr = 0;
         }
     }
 
-    protected abstract void closeNativeObject(int ptr);
+    protected abstract void closeNativeObject(long ptr);
+
+    @Override
+    public void close() {
+        unref();
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        if (mPtr != 0) {
+            Log.w(TAG,
+                    "NativeObject "
+                            + getClass().getSimpleName()
+                            + " was finalized before native resource was closed, did you forget to call close()?");
+        }
+
+        super.finalize();
+    }
 }
