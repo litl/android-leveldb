@@ -56,8 +56,10 @@ abstract class NativeObject implements Closeable {
     protected abstract void closeNativeObject(long ptr);
 
     @Override
-    public void close() {
-        unref();
+    public synchronized void close() {
+        if (mPtr != 0) {
+            unref();
+        }
     }
 
     @Override
