@@ -2,6 +2,7 @@ package com.litl.leveldb;
 
 import java.io.Closeable;
 
+import android.text.TextUtils;
 import android.util.Log;
 
 abstract class NativeObject implements Closeable {
@@ -55,17 +56,25 @@ abstract class NativeObject implements Closeable {
     protected abstract void closeNativeObject(long ptr);
 
     @Override
-    public void close() {
-        unref();
+    public synchronized void close() {
+        if (mPtr != 0) {
+            unref();
+        }
     }
 
     @Override
     protected void finalize() throws Throwable {
         if (mPtr != 0) {
-            Log.w(TAG,
-                    "NativeObject "
-                            + getClass().getSimpleName()
-                            + " was finalized before native resource was closed, did you forget to call close()?");
+            Class<?> clazz = getClass();
+            String name = clazz.getSimpleName();
+            while (TextUtils.isEmpty(name)) {
+                clazz = clazz.getSuperclass();
+                name = clazz.getSimpleName();
+            }
+
+            Log.w(TAG, "NativeObject " + name + " refcount: " + mRefCount
+                    + " id: " + System.identityHashCode(this)
+                    + " was finalized before native resource was closed, did you forget to call close()?");
         }
 
         super.finalize();
