@@ -25,6 +25,15 @@ nativeSeekToFirst(JNIEnv* env,
 }
 
 static void
+nativeSeekToLast(JNIEnv* env,
+                  jclass clazz,
+                  jlong iterPtr)
+{
+    leveldb::Iterator* iter = reinterpret_cast<leveldb::Iterator*>(iterPtr);
+    iter->SeekToLast();
+}
+
+static void
 nativeSeek(JNIEnv* env,
            jclass clazz,
            jlong iterPtr,
@@ -98,6 +107,7 @@ static JNINativeMethod sMethods[] =
 {
         { "nativeDestroy", "(J)V", (void*) nativeDestroy },
         { "nativeSeekToFirst", "(J)V", (void*) nativeSeekToFirst },
+        { "nativeSeekToLast", "(J)V", (void*) nativeSeekToLast },
         { "nativeSeek", "(J[B)V", (void*) nativeSeek },
         { "nativeValid", "(J)Z", (void*) nativeValid },
         { "nativeNext", "(J)V", (void*) nativeNext },
