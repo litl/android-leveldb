@@ -1,0 +1,49 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:0.9.0'
+    }
+}
+
+apply plugin: 'android-library'
+
+android {
+    compileSdkVersion 19
+    buildToolsVersion "19"
+
+    sourceSets {
+        main {
+            manifest.srcFile 'library/AndroidManifest.xml'
+            java.srcDirs = ['library/src']
+            resources.srcDirs = ['library/src']
+            aidl.srcDirs = ['library/src']
+            renderscript.srcDirs = ['library/src']
+            res.srcDirs = ['library/res']
+            assets.srcDirs = ['library/assets']
+            jniLibs.srcDirs = ['library/libs']
+        }
+
+        androidTest {
+            java.srcDirs = ['tests/src']
+            resources.srcDirs = ['tests/src']
+            aidl.srcDirs = ['tests/src']
+            renderscript.srcDirs = ['tests/src']
+            res.srcDirs = ['tests/res']
+            assets.srcDirs = ['tests/assets']
+        }
+    }
+
+    defaultConfig {
+        minSdkVersion 8
+        targetSdkVersion 19
+    }
+}
+
+task ndkBuild(type: Exec) {
+    commandLine 'ndk-build', '-j', '-C', 'library'
+}
+tasks.withType(JavaCompile) {
+    compileTask -> compileTask.dependsOn ndkBuild
+}
