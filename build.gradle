@@ -47,3 +47,61 @@ task ndkBuild(type: Exec) {
 tasks.withType(JavaCompile) {
     compileTask -> compileTask.dependsOn ndkBuild
 }
+
+apply plugin: 'maven'
+apply plugin: 'signing'
+
+version = "1.0.0"
+group = "com.litl"
+
+configurations {
+    archives {
+        extendsFrom configurations.default
+    }
+}
+
+signing {
+    required { has("release") && gradle.taskGraph.hasTask("uploadArchives") }
+    sign configurations.archives
+}
+
+uploadArchives {
+    configuration = configurations.archives
+    repositories.mavenDeployer {
+        beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+        repository(url: sonatypeRepo) {
+            authentication(userName: sonatypeUsername,
+                    password: sonatypePassword)
+        }
+
+        pom.project {
+            name 'Android LevelDB JNI'
+            packaging 'aar'
+            description 'Android NDK bindings for LevelDB'
+            url 'https://github.com/litl/android-leveldb'
+
+            scm {
+                url 'scm:git@github.com:litl/android-leveldb.git'
+                connection 'scm:git@github.com:litl/android-leveldb.git'
+                developerConnection 'scm:git@github.com:litl/android-leveldb.git'
+            }
+
+            licenses {
+                license {
+                    name 'BSD-style'
+                    url 'http://opensource.org/licenses/BSD-3-Clause'
+                    distribution 'repo'
+                }
+            }
+
+            developers {
+                developer {
+                    id 'tingo'
+                    name 'Tambet Ingo'
+                    email 'tingo@litl.com'
+                }
+            }
+        }
+    }
+}
