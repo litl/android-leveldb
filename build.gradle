@@ -42,7 +42,7 @@ android {
 }
 
 task ndkBuild(type: Exec) {
-    commandLine 'ndk-build', '-j', '-C', 'library'
+    commandLine 'ndk-build', '-C', 'library'
 }
 tasks.withType(JavaCompile) {
     compileTask -> compileTask.dependsOn ndkBuild
