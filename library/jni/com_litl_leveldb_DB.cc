@@ -10,11 +10,30 @@
 #include "leveldb/db.h"
 #include "leveldb/write_batch.h"
 
+static jmethodID gByteBuffer_isDirectMethodID;
+static jmethodID gByteBuffer_positionMethodID;
+static jmethodID gByteBuffer_limitMethodID;
+static jmethodID gByteBuffer_arrayMethodID;
+
 static jlong
 nativeOpen(JNIEnv* env,
            jclass clazz,
            jstring dbpath)
 {
+    static bool gInited;
+
+    if (!gInited) {
+      jclass byteBuffer_Clazz = env->FindClass("java/nio/ByteBuffer");
+      gByteBuffer_isDirectMethodID = env->GetMethodID(byteBuffer_Clazz,
+                                                      "isDirect", "()Z");
+      gByteBuffer_positionMethodID = env->GetMethodID(byteBuffer_Clazz,
+                                                      "position", "()I");
+      gByteBuffer_limitMethodID = env->GetMethodID(byteBuffer_Clazz,
+                                                   "limit", "()I");
+      gByteBuffer_arrayMethodID = env->GetMethodID(byteBuffer_Clazz,
+                                                   "array", "()[B");
+      gInited = true;
+    }
 
     const char *path = env->GetStringUTFChars(dbpath, 0);
     LOGI("Opening database %s", path);
@@ -75,6 +94,52 @@ nativeGet(JNIEnv * env,
     }
 
     env->ReleaseByteArrayElements(keyObj, buffer, JNI_ABORT);
+    delete iter;
+
+    return result;
+}
+
+static jbyteArray
+nativeGetBB(JNIEnv * env,
+            jclass clazz,
+            jlong dbPtr,
+            jlong snapshotPtr,
+            jobject keyObj)
+{
+    leveldb::DB* db = reinterpret_cast<leveldb::DB*>(dbPtr);
+    leveldb::ReadOptions options = leveldb::ReadOptions();
+    options.snapshot = reinterpret_cast<leveldb::Snapshot*>(snapshotPtr);
+
+    jint keyPos = env->CallIntMethod(keyObj, gByteBuffer_positionMethodID);
+    jint keyLimit = env->CallIntMethod(keyObj, gByteBuffer_limitMethodID);
+    jboolean keyIsDirect = env->CallBooleanMethod(keyObj, gByteBuffer_isDirectMethodID);
+    jbyteArray keyArray;
+    void* key;
+    if (keyIsDirect) {
+        key = env->GetDirectBufferAddress(keyObj);
+        keyArray = NULL;
+    } else {
+        keyArray = (jbyteArray) env->CallObjectMethod(keyObj, gByteBuffer_arrayMethodID);
+        key = (void*) env->GetByteArrayElements(keyArray, NULL);
+    }
+
+    jbyteArray result;
+    leveldb::Slice keySlice = leveldb::Slice((const char *) key + keyPos, keyLimit - keyPos);
+    leveldb::Iterator* iter = db->NewIterator(options);
+    iter->Seek(keySlice);
+    if (iter->Valid() && keySlice == iter->key()) {
+        leveldb::Slice value = iter->value();
+        size_t len = value.size();
+        result = env->NewByteArray(len);
+        env->SetByteArrayRegion(result, 0, len, (const jbyte *) value.data());
+    } else {
+        result = NULL;
+    }
+
+    if (keyArray) {
+        env->ReleaseByteArrayElements(keyArray, (jbyte*) key, JNI_ABORT);
+    }
+
     delete iter;
 
     return result;
@@ -195,6 +260,7 @@ static JNINativeMethod sMethods[] =
         { "nativeOpen", "(Ljava/lang/String;)J", (void*) nativeOpen },
         { "nativeClose", "(J)V", (void*) nativeClose },
         { "nativeGet", "(JJ[B)[B", (void*) nativeGet },
+        { "nativeGet", "(JJLjava/nio/ByteBuffer;)[B", (void*) nativeGetBB },
         { "nativePut", "(J[B[B)V", (void*) nativePut },
         { "nativeDelete", "(J[B)V", (void*) nativeDelete },
         { "nativeWrite", "(JJ)V", (void*) nativeWrite },

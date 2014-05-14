@@ -1,6 +1,7 @@
 package com.litl.leveldb;
 
 import java.io.File;
+import java.nio.ByteBuffer;
 
 public class DB extends NativeObject {
     public abstract static class Snapshot extends NativeObject {
@@ -51,6 +52,19 @@ public class DB extends NativeObject {
     }
 
     public byte[] get(Snapshot snapshot, byte[] key) {
+        assertOpen("Database is closed");
+        if (key == null) {
+            throw new NullPointerException();
+        }
+
+        return nativeGet(mPtr, snapshot != null ? snapshot.getPtr() : 0, key);
+    }
+
+    public byte[] get(ByteBuffer key) {
+        return get(null, key);
+    }
+
+    public byte[] get(Snapshot snapshot, ByteBuffer key) {
         assertOpen("Database is closed");
         if (key == null) {
             throw new NullPointerException();
@@ -132,6 +146,8 @@ public class DB extends NativeObject {
     private static native void nativePut(long dbPtr, byte[] key, byte[] value);
 
     private static native byte[] nativeGet(long dbPtr, long snapshotPtr, byte[] key);
+
+    private static native byte[] nativeGet(long dbPtr, long snapshotPtr, ByteBuffer key);
 
     private static native void nativeDelete(long dbPtr, byte[] key);
 
