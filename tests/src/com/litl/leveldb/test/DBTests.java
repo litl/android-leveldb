@@ -52,6 +52,22 @@ public class DBTests extends AndroidTestCase {
 
         val = mDb.get(bytes("boo"));
         assertNull(val);
+
+        final ByteBuffer bb = ByteBuffer.allocate(20);
+        bb.put(bytes("boo hello world"));
+        bb.flip();
+
+        // Search for "hello"
+        bb.position(4).limit(bb.position() + 5);
+        val = mDb.get(bb);
+        assertNotNull(val);
+        assertTrue(Arrays.equals(val, bytes("world")));
+
+        // Search for "boo"
+        bb.position(0).limit(4);
+        bb.flip();
+        val = mDb.get(bb);
+        assertNull(val);
     }
 
     public void testBatchAndIterator() {
