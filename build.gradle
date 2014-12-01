@@ -42,7 +42,7 @@ tasks.withType(JavaCompile) {
 apply plugin: 'maven'
 apply plugin: 'signing'
 
-version = "1.0.2"
+version = "1.0.3"
 group = "com.litl"
 
 configurations {
