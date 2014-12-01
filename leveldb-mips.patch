@@ -1,0 +1,27 @@
+diff --git a/src/main/jni/leveldb-1.18/port/atomic_pointer.h b/src/main/jni/leveldb-1.18/port/atomic_pointer.h
+index 9bf091f..073dbf4 100644
+--- a/src/main/jni/leveldb-1.18/port/atomic_pointer.h
++++ b/src/main/jni/leveldb-1.18/port/atomic_pointer.h
+@@ -37,6 +37,8 @@
+ #define ARCH_CPU_ARM_FAMILY 1
+ #elif defined(__ppc__) || defined(__powerpc__) || defined(__powerpc64__)
+ #define ARCH_CPU_PPC_FAMILY 1
++#elif defined(__mips__)
++#define ARCH_CPU_MIPS_FAMILY 1
+ #endif
+ 
+ namespace leveldb {
+@@ -101,6 +103,13 @@ inline void MemoryBarrier() {
+ }
+ #define LEVELDB_HAVE_MEMORY_BARRIER
+ 
++// MIPS
++#elif defined(ARCH_CPU_MIPS_FAMILY) && defined(__GNUC__)
++inline void MemoryBarrier() {
++  __asm__ __volatile__("sync" : : : "memory");
++}
++#define LEVELDB_HAVE_MEMORY_BARRIER
++
+ #endif
+ 
+ // AtomicPointer built using platform-specific MemoryBarrier()

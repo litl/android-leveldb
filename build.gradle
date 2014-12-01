@@ -3,52 +3,37 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:0.9.0'
+        classpath 'com.android.tools.build:gradle:1.0.0-rc1'
     }
 }
 
-apply plugin: 'android-library'
+apply plugin: 'com.android.library'
 
 android {
-    compileSdkVersion 19
-    buildToolsVersion "19.0.3"
-
-    sourceSets {
-        main {
-            manifest.srcFile 'library/AndroidManifest.xml'
-            java.srcDirs = ['library/src']
-            resources.srcDirs = ['library/src']
-            aidl.srcDirs = ['library/src']
-            renderscript.srcDirs = ['library/src']
-            res.srcDirs = ['library/res']
-            assets.srcDirs = ['library/assets']
-            jniLibs.srcDirs = ['library/libs']
-        }
-
-        androidTest {
-            java.srcDirs = ['tests/src']
-            resources.srcDirs = ['tests/src']
-            aidl.srcDirs = ['tests/src']
-            renderscript.srcDirs = ['tests/src']
-            res.srcDirs = ['tests/res']
-            assets.srcDirs = ['tests/assets']
-        }
-    }
+    compileSdkVersion 21
+    buildToolsVersion "21.1"
 
     defaultConfig {
         minSdkVersion 8
-        targetSdkVersion 19
+        targetSdkVersion 21
+    }
+
+    sourceSets {
+        main {
+            jniLibs.srcDirs = ['src/main/libs']
+            jni.srcDirs = []
+        }
     }
 }
 
 task ndkBuild(type: Exec) {
-    File ndkDir = project.getPlugins().getPlugin('android-library').ndkDirectory
+    File ndkDir = project.getPlugins().getPlugin('android-library').ndkFolder
     if (ndkDir == null || !ndkDir.isDirectory()) {
       throw new GradleException("NDK is not configured")
     }
     String ndkBuild = ndkDir.absolutePath + File.separator + 'ndk-build'
 
-    commandLine ndkBuild, '-C', 'library'
+    commandLine ndkBuild, '-C', 'src/main'
 }
 tasks.withType(JavaCompile) {
     compileTask -> compileTask.dependsOn ndkBuild
