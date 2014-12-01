@@ -1,9 +1,12 @@
 bin
+build
 gen
 obj
-library/libs/armeabi-v7a
+src/main/libs/
 local.properties
 .DS_Store
+.gradle
+.idea
 .metadata
 .settings
 *~
